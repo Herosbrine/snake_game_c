@@ -21,6 +21,8 @@ typedef struct snake_s
 {
     int level;
     int life;
+    int length;
+    char *mv_snake;
 }snake_t;
 
 typedef struct data_s

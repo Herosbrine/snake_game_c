@@ -52,8 +52,31 @@ void initialize_data(data_t *data)
 
 void initialize_snake(data_t *data)
 {
+    int i = 0;
+    int a = 0;
+    data->snake.mv_snake = NULL;
+
     data->snake.level = 1;
     data->snake.life = 5;
+    data->snake.length = 5;
+    data->snake.mv_snake = malloc(sizeof(char) * data->snake.length + 1);
+    for (; i < data->snake.length; i++){
+        data->map[MAP_HEIGHT / 2][MAP_WIDTH / 2 - data->snake.length + i] = '*';
+    }
+    data->map[MAP_HEIGHT / 2][MAP_WIDTH / 2 - data->snake.length + i] = '>';
+    //avoir comment on fait, je l ai mit en char * qu en pense tu ?
+    for (int y = 0; data->map[MAP_HEIGHT / 2][y] != '\0'; y++) {
+        if (data->map[MAP_HEIGHT / 2][y] == '*' || data->map[MAP_HEIGHT / 2][y] == '>') {
+            data->snake.mv_snake[a] = data->map[MAP_HEIGHT / 2][y];
+            a++;
+        }
+    }
+    a = 0;
+    // pour faire bouger le serpent je penser a un truc comme sa
+    if (getch() == (char)KEY_RIGHT) {
+        data->snake.mv_snake[a] = data->snake.mv_snake[a+6];
+    }
+    printw(data->snake.mv_snake);
 }
 
 void print_small(void)
