@@ -58,9 +58,8 @@ void initialize_snake(data_t *data)
     data->snake.level = 1;
     data->snake.life = 5;
     data->snake.length = 5;
-    for (; i < data->snake.length; i++){
+    for (; i < data->snake.length; i++)
         data->map[MAP_HEIGHT / 2][MAP_WIDTH / 2 - data->snake.length + i] = '*';
-    }
     data->map[MAP_HEIGHT / 2][MAP_WIDTH / 2 - data->snake.length + i] = '>';
 }
 
