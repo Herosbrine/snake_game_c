@@ -7,12 +7,15 @@
 
 #include "my.h"
 #include "snake.h"
+#include <time.h>
 
 void initialize_ncurses(void)
 {
     initscr();
     curs_set(0);
-    keypad(stdscr, TRUE);
+    keypad(stdscr, FALSE);
+    notimeout(stdscr, FALSE);
+    timeout(0.1);
     noecho();
     refresh();
 }
@@ -46,6 +49,8 @@ void initialize_data(data_t *data)
 {
     data->key = 0;
     data->game_isActive = 1;
+    data->begin_time = time(NULL);
+    data->timer = 0;
     malloc_my_map(data);
     fill_my_map(data);
 }
@@ -58,9 +63,6 @@ void initialize_snake(data_t *data)
     data->snake.level = 1;
     data->snake.life = 5;
     data->snake.length = 5;
-    for (; i < data->snake.length; i++)
-        data->map[MAP_HEIGHT / 2][MAP_WIDTH / 2 - data->snake.length + i] = '*';
-    data->map[MAP_HEIGHT / 2][MAP_WIDTH / 2 - data->snake.length + i] = '>';
 }
 
 void print_small(void)
@@ -72,44 +74,48 @@ void print_small(void)
 
 void print_map(data_t *data)
 {
+    int level_alignement = MAP_WIDTH / 10;
+    int time_alignement = 0;
+    int life_alignement = 0;
     printw("\n");
-    for (int i = 0; i < MAP_WIDTH / 10; i++)
+    for (int i = 0; i < level_alignement; i++)
         printw(" ");
     printw("LEVEL : %d", data->snake.level);
-    for (int i = 0; i < MAP_WIDTH - MAP_WIDTH / 10 - 7 - my_number_len(data->snake.life) - MAP_WIDTH / 10 - 8 - my_number_len(data->snake.level); i++)
+    time_alignement = MAP_WIDTH / 2 - my_strlen("LEVEL : ") - my_number_len(data->snake.level) - (my_strlen("TIME : :") + 4) / 2 - level_alignement;
+    for (int i = 0; i < time_alignement; i++)
+        printw(" ");
+    printw("TIME : ");
+    if (my_number_len(data->timer / 60) == 1)
+        printw("0");
+    printw("%d", data->timer / 60);
+    printw(":");
+    if (my_number_len(data->timer % 60) == 1)
+        printw("0");
+    printw("%d", data->timer % 60);
+    life_alignement = time_alignement;
+    for (int i = 0; i < life_alignement; i++)
         printw(" ");
     printw("LIFE : %d\n\n", data->snake.life);
     for (int i = 0; i < MAP_HEIGHT; i++)
         printw("%s\n", data->map[i]);
 }
 
-int move_snake(data_t *data)
-{
-    int y = 0;
-
-    if (data->key == (char)KEY_RIGHT) {
-        for (; data->map[MAP_HEIGHT / 2][MAP_WIDTH / 2 - data->snake.length + y] != '*'; y++);
-        data->map[MAP_HEIGHT / 2][MAP_WIDTH / 2 - data->snake.length + y] = ' ';
-        for (; data->map[MAP_HEIGHT / 2][MAP_WIDTH / 2 - data->snake.length + y] != '>'; y++);
-        data->map[MAP_HEIGHT / 2][MAP_WIDTH / 2 - data->snake.length + y] = '*';
-        data->map[MAP_HEIGHT / 2][MAP_WIDTH / 2 - data->snake.length + y+1] = '>';
-    }
-    sleep(0.1);
-    return (0);
-}
-
 void game_loop(data_t *data)
 {
+    int time_checker = 0;
+
     while (data->game_isActive){
+        time_checker = time(NULL);
+        data->timer = time(NULL) - data->begin_time;
         if (LINES < MAP_HEIGHT || COLS < MAP_WIDTH)
             print_small();
         else {
             clear();
             print_map(data);
-            data->key = getch();
-            move_snake(data);
             refresh();
+            data->key = getch();
         }
+        while (time(NULL) < time_checker + 0.1);
     }
 
 }

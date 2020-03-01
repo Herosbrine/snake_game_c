@@ -14,21 +14,22 @@
 #include <fcntl.h>
 #include <stdlib.h>
 
-#define MAP_WIDTH    180
-#define MAP_HEIGHT   45
+#define MAP_WIDTH    170
+#define MAP_HEIGHT   40
 
 typedef struct snake_s
 {
     int level;
     int life;
     int length;
-    char *mv_snake;
 }snake_t;
 
 typedef struct data_s
 {
     char key;
     int game_isActive;
+    int begin_time;
+    int timer;
     char **map;
     snake_t snake;
 }data_t;
