@@ -27,7 +27,7 @@ typedef struct snake_s
 
 typedef struct data_s
 {
-    int key;
+    char key;
     int game_isActive;
     char **map;
     snake_t snake;
