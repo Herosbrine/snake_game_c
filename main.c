@@ -9,6 +9,35 @@
 #include "snake.h"
 #include <time.h>
 
+int random_number(int nb_one, int nb_two)
+{
+    int a = 0;
+
+    a = rand() % (nb_two - nb_one) + 1 + nb_one;
+    return (a);
+}
+
+void generate_object(data_t *data)
+{
+    for (int i = 0; i < MAX_OBJECT; i++){
+        if (data->object[i].type == 0){
+            data->object[i].type = 1;
+            data->object[i].pos_x = random_number(1, MAP_WIDTH - 1);
+            data->object[i].pos_y = random_number(1, MAP_HEIGHT - 1);
+        }
+    }
+}
+
+void initialize_object(data_t *data)
+{
+    data->object = malloc(sizeof(object_t) * MAX_OBJECT);
+    for (int i = 0; i < MAX_OBJECT; i++){
+        data->object[i].pos_x = 0;
+        data->object[i].pos_y = 0;
+        data->object[i].type = 0;
+    }
+}
+
 void initialize_ncurses(void)
 {
     initscr();
@@ -68,18 +97,16 @@ void reset_game(data_t *data)
     data->snake.length = LENGHT_SNAKE;
     data->snake.cas = malloc(sizeof(cas_t) * MAX_LENGHT);
     for (int i = 0; i < MAX_LENGHT; i++){
-        data->snake.cas[i].is_active = 0;
         data->snake.cas[i].pos_x = 0;
         data->snake.cas[i].pos_y = 0;
         data->snake.cas[i].direction = 0;
     }
     for (int i = 0; i < data->snake.length; i++){
-        data->snake.cas[i].is_active = 1;
         data->snake.cas[i].direction = RIGHT;
         data->snake.cas[i].pos_x = MAP_HEIGHT / 2;
         data->snake.cas[i].pos_y = MAP_WIDTH / 2 - data->snake.length / 2 + i;
     }
-    for (int i = 0; data->snake.cas[i].is_active != 0; i++){
+    for (int i = 0; i < data->snake.length; i++){
         data->map[data->snake.cas[i].pos_x][data->snake.cas[i].pos_y] = '-';
     }
 }
@@ -91,18 +118,16 @@ void initialize_snake(data_t *data)
     data->snake.length = LENGHT_SNAKE;
     data->snake.cas = malloc(sizeof(cas_t) * MAX_LENGHT);
     for (int i = 0; i < MAX_LENGHT; i++){
-        data->snake.cas[i].is_active = 0;
         data->snake.cas[i].pos_x = 0;
         data->snake.cas[i].pos_y = 0;
         data->snake.cas[i].direction = 0;
     }
     for (int i = 0; i < data->snake.length; i++){
-        data->snake.cas[i].is_active = 1;
         data->snake.cas[i].direction = RIGHT;
         data->snake.cas[i].pos_x = MAP_HEIGHT / 2;
         data->snake.cas[i].pos_y = MAP_WIDTH / 2 - data->snake.length / 2 + i;
     }
-    for (int i = 0; data->snake.cas[i].is_active != 0; i++){
+    for (int i = 0; i < data->snake.length; i++){
         data->map[data->snake.cas[i].pos_x][data->snake.cas[i].pos_y] = '-';
     }
 }
@@ -151,7 +176,7 @@ void print_map(data_t *data)
         for (int j = 1; j < MAP_WIDTH - 1; j++)
             data->map[i][j] = ' ';
     }
-    for (int i = 0; data->snake.cas[i].is_active != 0; i++){
+    for (int i = 0; i < data->snake.length; i++){
         data->map[data->snake.cas[i].pos_x][data->snake.cas[i].pos_y] = 'o';
     }
     if (data->snake.cas[data->snake.length - 1].direction == RIGHT)
@@ -198,18 +223,16 @@ void reset_snake(data_t *data)
     data->key = RIGHT;
 
     for (int i = 0; i < MAX_LENGHT; i++){
-        data->snake.cas[i].is_active = 0;
         data->snake.cas[i].pos_x = 0;
         data->snake.cas[i].pos_y = 0;
         data->snake.cas[i].direction = 0;
     }
     for (int i = 0; i < data->snake.length; i++){
-        data->snake.cas[i].is_active = 1;
         data->snake.cas[i].direction = RIGHT;
         data->snake.cas[i].pos_x = MAP_HEIGHT / 2;
         data->snake.cas[i].pos_y = MAP_WIDTH / 2 - data->snake.length / 2 + i;
     }
-    for (int i = 0; data->snake.cas[i].is_active != 0; i++){
+    for (int i = 0; i < data->snake.length; i++){
         data->map[data->snake.cas[i].pos_x][data->snake.cas[i].pos_y] = '-';
     }
 }
@@ -217,7 +240,7 @@ void reset_snake(data_t *data)
 void snake_move(data_t *data)
 {
     if (TIMEOF(data->clock_move) > 30){
-        for (int i = 0; data->snake.cas[i].is_active != 0; i++){
+        for (int i = 0; i < data->snake.length; i++){
             if (data->snake.cas[i].direction == RIGHT){
                 if (i == data->snake.length - 1){
                     if (data->map[data->snake.cas[i].pos_x][data->snake.cas[i].pos_y + 1] != ' '){
@@ -292,9 +315,11 @@ int main(void)
 {
     data_t data;
 
+    srand(time(NULL));
     initialize_ncurses();
     initialize_data(&data);
     initialize_snake(&data);
+    initialize_object(&data);
     game_loop(&data);
     endwin();
     return (0);
