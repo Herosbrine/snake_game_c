@@ -95,7 +95,6 @@ void print_map(data_t *data)
     int time_alignement = 0;
     int life_alignement = 0;
     printw("\n");
-    printw("%d", data->key);
     for (int i = 0; i < level_alignement; i++)
         printw(" ");
     printw("LEVEL : %d", data->snake.level);

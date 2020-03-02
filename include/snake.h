@@ -20,7 +20,7 @@
 #define MAP_WIDTH      170
 #define MAP_HEIGHT     40
 #define MAX_LENGHT     200
-#define LENGHT_SNAKE   80
+#define LENGHT_SNAKE   120
 #define LIFE_SNAKE     5
 
 #define LEFT         1
