@@ -21,9 +21,10 @@ void generate_object(data_t *data)
 {
     for (int i = 0; i < MAX_OBJECT; i++){
         if (data->object[i].type == 0){
-            data->object[i].type = 1;
-            data->object[i].pos_x = random_number(1, MAP_WIDTH - 1);
-            data->object[i].pos_y = random_number(1, MAP_HEIGHT - 1);
+            data->object[i].type = FOOD;
+            data->object[i].pos_x = random_number(1, MAP_HEIGHT - 2);
+            data->object[i].pos_y = random_number(1, MAP_WIDTH - 2);
+            break;
         }
     }
 }
@@ -127,9 +128,6 @@ void initialize_snake(data_t *data)
         data->snake.cas[i].pos_x = MAP_HEIGHT / 2;
         data->snake.cas[i].pos_y = MAP_WIDTH / 2 - data->snake.length / 2 + i;
     }
-    for (int i = 0; i < data->snake.length; i++){
-        data->map[data->snake.cas[i].pos_x][data->snake.cas[i].pos_y] = '-';
-    }
 }
 
 void print_game_over_screen(data_t *data)
@@ -178,6 +176,12 @@ void print_map(data_t *data)
     }
     for (int i = 0; i < data->snake.length; i++){
         data->map[data->snake.cas[i].pos_x][data->snake.cas[i].pos_y] = 'o';
+    }
+    for (int i = 0; i < MAX_OBJECT; i++) {
+        if (data->object[i].type == FOOD) {
+            data->map[data->object[i].pos_x][data->object[i].pos_y] = 'G';
+            break;
+        }
     }
     if (data->snake.cas[data->snake.length - 1].direction == RIGHT)
         data->map[data->snake.cas[data->snake.length - 1].pos_x][data->snake.cas[data->snake.length - 1].pos_y] = '+';
@@ -237,42 +241,98 @@ void reset_snake(data_t *data)
     }
 }
 
+void delete_food(data_t *data, int j)
+{
+    data->object[j].type = 0;
+    data->snake.score += 1000;
+    data->snake.length++;
+    data->snake.cas[data->snake.length - 1].direction = data->snake.cas[data->snake.length - 2].direction;
+    if (data->snake.cas[data->snake.length - 2].direction == LEFT) {
+        data->snake.cas[data->snake.length - 1].pos_x = data->snake.cas[data->snake.length - 2].pos_x;
+        data->snake.cas[data->snake.length - 1].pos_y = data->snake.cas[data->snake.length - 2].pos_y - 1;
+    }
+    if (data->snake.cas[data->snake.length - 2].direction == RIGHT) {
+        data->snake.cas[data->snake.length - 1].pos_x = data->snake.cas[data->snake.length - 2].pos_x;
+        data->snake.cas[data->snake.length - 1].pos_y = data->snake.cas[data->snake.length - 2].pos_y + 1;
+    }
+    if (data->snake.cas[data->snake.length - 2].direction == UP) {
+        data->snake.cas[data->snake.length - 1].pos_x = data->snake.cas[data->snake.length - 2].pos_x - 1;
+        data->snake.cas[data->snake.length - 1].pos_y = data->snake.cas[data->snake.length - 2].pos_y;
+    }
+    if (data->snake.cas[data->snake.length - 2].direction == DOWN) {
+        data->snake.cas[data->snake.length - 1].pos_x = data->snake.cas[data->snake.length - 2].pos_x + 1;
+        data->snake.cas[data->snake.length - 1].pos_y = data->snake.cas[data->snake.length - 2].pos_y;
+    }
+}
+
 void snake_move(data_t *data)
 {
-    if (TIMEOF(data->clock_move) > 30){
+    if (TIMEOF(data->clock_move) > 90){
         for (int i = 0; i < data->snake.length; i++){
             if (data->snake.cas[i].direction == RIGHT){
                 if (i == data->snake.length - 1){
-                    if (data->map[data->snake.cas[i].pos_x][data->snake.cas[i].pos_y + 1] != ' '){
+                    if (data->map[data->snake.cas[i].pos_x][data->snake.cas[i].pos_y + 1] != ' ' && data->map[data->snake.cas[i].pos_x][data->snake.cas[i].pos_y + 1] != 'G'){
                         reset_snake(data);
                         return;
+                    }
+                    if (data->map[data->snake.cas[i].pos_x][data->snake.cas[i].pos_y + 1] == 'G') {
+                        for (int j = 0; j < MAX_OBJECT; j++){
+                            if (data->object[j].type == FOOD && data->object[j].pos_x == data->snake.cas[i].pos_x && data->snake.cas[i].pos_y + 1 == data->object[j].pos_y){
+                                delete_food(data, j);
+                                break;
+                            }
+                        }
                     }
                 }
                 data->snake.cas[i].pos_y += 1;
             }
             if (data->snake.cas[i].direction == LEFT){
                 if (i == data->snake.length - 1){
-                    if (data->map[data->snake.cas[i].pos_x][data->snake.cas[i].pos_y - 1] != ' '){
+                    if (data->map[data->snake.cas[i].pos_x][data->snake.cas[i].pos_y - 1] != ' ' && data->map[data->snake.cas[i].pos_x][data->snake.cas[i].pos_y - 1] != 'G'){
                         reset_snake(data);
                         return;
+                    }
+                    if (data->map[data->snake.cas[i].pos_x][data->snake.cas[i].pos_y - 1] == 'G') {
+                        for (int j = 0; j < MAX_OBJECT; j++){
+                            if (data->object[j].type == FOOD && data->object[j].pos_x == data->snake.cas[i].pos_x && data->snake.cas[i].pos_y - 1 == data->object[j].pos_y){
+                                delete_food(data, j);
+                                break;
+                            }
+                        }
                     }
                 }
                 data->snake.cas[i].pos_y -= 1;
             }
             if (data->snake.cas[i].direction == UP){
                 if (i == data->snake.length - 1){
-                    if (data->map[data->snake.cas[i].pos_x - 1][data->snake.cas[i].pos_y] != ' '){
+                    if (data->map[data->snake.cas[i].pos_x - 1][data->snake.cas[i].pos_y] != ' ' && data->map[data->snake.cas[i].pos_x - 1][data->snake.cas[i].pos_y] != 'G'){
                         reset_snake(data);
                         return;
+                    }
+                    if (data->map[data->snake.cas[i].pos_x - 1][data->snake.cas[i].pos_y] == 'G') {
+                        for (int j = 0; j < MAX_OBJECT; j++){
+                            if (data->object[j].type == FOOD && data->object[j].pos_x == data->snake.cas[i].pos_x - 1 && data->snake.cas[i].pos_y == data->object[j].pos_y){
+                                delete_food(data, j);
+                                break;
+                            }
+                        }
                     }
                 }
                 data->snake.cas[i].pos_x -= 1;
             }
             if (data->snake.cas[i].direction == DOWN){
                 if (i == data->snake.length - 1){
-                    if (data->map[data->snake.cas[i].pos_x + 1][data->snake.cas[i].pos_y] != ' '){
+                    if (data->map[data->snake.cas[i].pos_x + 1][data->snake.cas[i].pos_y] != ' ' && data->map[data->snake.cas[i].pos_x + 1][data->snake.cas[i].pos_y] != 'G'){
                         reset_snake(data);
                         return;
+                    }
+                    if (data->map[data->snake.cas[i].pos_x + 1][data->snake.cas[i].pos_y] == 'G') {
+                        for (int j = 0; j < MAX_OBJECT; j++){
+                            if (data->object[j].type == FOOD && data->object[j].pos_x == data->snake.cas[i].pos_x + 1 && data->snake.cas[i].pos_y == data->object[j].pos_y){
+                                delete_food(data, j);
+                                break;
+                            }
+                        }
                     }
                 }
                 data->snake.cas[i].pos_x += 1;
@@ -284,6 +344,14 @@ void snake_move(data_t *data)
     }
 }
 
+int there_are_not_food(data_t *data)
+{
+    for (int i = 0; i < MAX_OBJECT; i++) {
+        if (data->object[i].type == FOOD)
+            return (0);
+    }
+    return (1);
+}
 void game_loop(data_t *data)
 {
     while (data->game_isActive){
@@ -295,6 +363,9 @@ void game_loop(data_t *data)
             actualize_move_key(data);
             snake_move(data);
             data->snake.score += 1;
+            if (there_are_not_food(data)){
+                generate_object(data);
+            }
             print_map(data);
             refresh();
         }

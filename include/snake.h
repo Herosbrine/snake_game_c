@@ -17,10 +17,10 @@
 
 #define TIMEOF(x)   sfTime_asMilliseconds(sfClock_getElapsedTime(x))
 
-#define MAP_WIDTH      170
-#define MAP_HEIGHT     40
+#define MAP_WIDTH      30
+#define MAP_HEIGHT     30
 #define MAX_LENGHT     MAP_HEIGHT * MAP_WIDTH
-#define LENGHT_SNAKE   40
+#define LENGHT_SNAKE   2
 #define LIFE_SNAKE     3
 #define MAX_OBJECT     MAX_LENGHT - LENGHT_SNAKE
 
@@ -28,6 +28,7 @@
 #define RIGHT        2
 #define UP           3
 #define DOWN         4
+#define FOOD         1
 
 typedef struct object_s
 {
