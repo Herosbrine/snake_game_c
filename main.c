@@ -13,9 +13,9 @@ void initialize_ncurses(void)
 {
     initscr();
     curs_set(0);
-    keypad(stdscr, FALSE);
+    keypad(stdscr, TRUE);
     notimeout(stdscr, FALSE);
-    timeout(0.1);
+    timeout(0.01);
     noecho();
     refresh();
 }
@@ -49,6 +49,7 @@ void initialize_data(data_t *data)
 {
     data->key = 0;
     data->game_isActive = 1;
+    data->clock_move = sfClock_create();
     data->begin_time = time(NULL);
     data->timer = 0;
     malloc_my_map(data);
@@ -61,8 +62,24 @@ void initialize_snake(data_t *data)
     int a = 0;
 
     data->snake.level = 1;
-    data->snake.life = 5;
-    data->snake.length = 5;
+    data->snake.life = LIFE_SNAKE;
+    data->snake.length = LENGHT_SNAKE;
+    data->snake.cas = malloc(sizeof(cas_t) * MAX_LENGHT);
+    for (int i = 0; i < MAX_LENGHT; i++){
+        data->snake.cas[i].is_active = 0;
+        data->snake.cas[i].pos_x = 0;
+        data->snake.cas[i].pos_y = 0;
+        data->snake.cas[i].direction = 0;
+    }
+    for (int i = 0; i < data->snake.length; i++){
+        data->snake.cas[i].is_active = 1;
+        data->snake.cas[i].direction = RIGHT;
+        data->snake.cas[i].pos_x = MAP_HEIGHT / 2;
+        data->snake.cas[i].pos_y = MAP_WIDTH / 2 - data->snake.length / 2 + i;
+    }
+    for (int i = 0; data->snake.cas[i].is_active != 0; i++){
+        data->map[data->snake.cas[i].pos_x][data->snake.cas[i].pos_y] = '-';
+    }
 }
 
 void print_small(void)
@@ -78,6 +95,7 @@ void print_map(data_t *data)
     int time_alignement = 0;
     int life_alignement = 0;
     printw("\n");
+    printw("%d", data->key);
     for (int i = 0; i < level_alignement; i++)
         printw(" ");
     printw("LEVEL : %d", data->snake.level);
@@ -96,28 +114,81 @@ void print_map(data_t *data)
     for (int i = 0; i < life_alignement; i++)
         printw(" ");
     printw("LIFE : %d\n\n", data->snake.life);
+    for (int i = 1; i < MAP_HEIGHT - 1; i++){
+        for (int j = 1; j < MAP_WIDTH - 1; j++)
+            data->map[i][j] = ' ';
+    }
+    for (int i = 0; data->snake.cas[i].is_active != 0; i++){
+        data->map[data->snake.cas[i].pos_x][data->snake.cas[i].pos_y] = 'o';
+    }
+    if (data->snake.cas[data->snake.length - 1].direction == RIGHT)
+        data->map[data->snake.cas[data->snake.length - 1].pos_x][data->snake.cas[data->snake.length - 1].pos_y] = '+';
+    if (data->snake.cas[data->snake.length - 1].direction == LEFT)
+        data->map[data->snake.cas[data->snake.length - 1].pos_x][data->snake.cas[data->snake.length - 1].pos_y] = '+';
+    if (data->snake.cas[data->snake.length - 1].direction == UP)
+        data->map[data->snake.cas[data->snake.length - 1].pos_x][data->snake.cas[data->snake.length - 1].pos_y] = '+';
+    if (data->snake.cas[data->snake.length - 1].direction == DOWN)
+        data->map[data->snake.cas[data->snake.length - 1].pos_x][data->snake.cas[data->snake.length - 1].pos_y] = '+';
     for (int i = 0; i < MAP_HEIGHT; i++)
         printw("%s\n", data->map[i]);
 }
 
+void actualize_move_key(data_t *data)
+{
+    int key = getch();
+
+    if (data->key != LEFT && key == KEY_LEFT){
+        data->key = LEFT;
+        data->snake.cas[data->snake.length - 1].direction = LEFT;
+    }
+    if (data->key != RIGHT && key == KEY_RIGHT){
+        data->key = RIGHT;
+        data->snake.cas[data->snake.length - 1].direction = RIGHT;
+    }
+    if (data->key != UP && key == KEY_UP){
+        data->key = UP;
+        data->snake.cas[data->snake.length - 1].direction = UP;
+    }
+    if (data->key != DOWN && key == KEY_DOWN){
+        data->key = DOWN;
+        data->snake.cas[data->snake.length - 1].direction = DOWN;
+    }
+}
+
+void snake_move(data_t *data)
+{
+    if (TIMEOF(data->clock_move) > 100){
+        for (int i = 0; data->snake.cas[i].is_active != 0; i++){
+            if (data->snake.cas[i].direction == RIGHT)
+                data->snake.cas[i].pos_y += 1;
+            if (data->snake.cas[i].direction == LEFT)
+                data->snake.cas[i].pos_y -= 1;
+            if (data->snake.cas[i].direction == UP)
+                data->snake.cas[i].pos_x -= 1;
+            if (data->snake.cas[i].direction == DOWN)
+                data->snake.cas[i].pos_x += 1;
+        }
+        for (int i = 0; i < data->snake.length - 1; i++)
+            data->snake.cas[i].direction = data->snake.cas[i + 1].direction;
+        sfClock_restart(data->clock_move);
+    }
+}
+
 void game_loop(data_t *data)
 {
-    int time_checker = 0;
-
     while (data->game_isActive){
-        time_checker = time(NULL);
         data->timer = time(NULL) - data->begin_time;
         if (LINES < MAP_HEIGHT || COLS < MAP_WIDTH)
             print_small();
         else {
             clear();
+            actualize_move_key(data);
+            snake_move(data);
             print_map(data);
             refresh();
-            data->key = getch();
         }
-        while (time(NULL) < time_checker + 0.1);
+        usleep(80000);
     }
-
 }
 
 int main(void)

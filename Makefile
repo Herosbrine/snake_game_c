@@ -17,7 +17,7 @@ all:	$(NAME)
 
 $(NAME):	$(OBJ)
 	make -C ./lib/my/
-	gcc $(FLAGS) -o $(NAME) $(SRC) $(LIB) -lncurses
+	gcc $(FLAGS) -o $(NAME) $(SRC) $(LIB) -lncurses -lcsfml-system
 
 debug:
 	gcc $(FLAGS) -g3 $(SRC) $(LIB)
