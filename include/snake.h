@@ -21,7 +21,7 @@
 #define MAP_HEIGHT     40
 #define MAX_LENGHT     200
 #define LENGHT_SNAKE   120
-#define LIFE_SNAKE     5
+#define LIFE_SNAKE     3
 
 #define LEFT         1
 #define RIGHT        2
@@ -38,7 +38,7 @@ typedef struct cas_s
 
 typedef struct snake_s
 {
-    int level;
+    int score;
     int life;
     int length;
     cas_t *cas;
