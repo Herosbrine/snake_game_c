@@ -56,6 +56,34 @@ void initialize_data(data_t *data)
     fill_my_map(data);
 }
 
+void reset_game(data_t *data)
+{
+    data->key = 0;
+    data->game_isActive = 1;
+    sfClock_restart(data->clock_move);
+    data->begin_time = time(NULL);
+    data->timer = 0;
+    data->snake.score = 0;
+    data->snake.life = LIFE_SNAKE;
+    data->snake.length = LENGHT_SNAKE;
+    data->snake.cas = malloc(sizeof(cas_t) * MAX_LENGHT);
+    for (int i = 0; i < MAX_LENGHT; i++){
+        data->snake.cas[i].is_active = 0;
+        data->snake.cas[i].pos_x = 0;
+        data->snake.cas[i].pos_y = 0;
+        data->snake.cas[i].direction = 0;
+    }
+    for (int i = 0; i < data->snake.length; i++){
+        data->snake.cas[i].is_active = 1;
+        data->snake.cas[i].direction = RIGHT;
+        data->snake.cas[i].pos_x = MAP_HEIGHT / 2;
+        data->snake.cas[i].pos_y = MAP_WIDTH / 2 - data->snake.length / 2 + i;
+    }
+    for (int i = 0; data->snake.cas[i].is_active != 0; i++){
+        data->map[data->snake.cas[i].pos_x][data->snake.cas[i].pos_y] = '-';
+    }
+}
+
 void initialize_snake(data_t *data)
 {
     data->snake.score = 0;
@@ -77,6 +105,15 @@ void initialize_snake(data_t *data)
     for (int i = 0; data->snake.cas[i].is_active != 0; i++){
         data->map[data->snake.cas[i].pos_x][data->snake.cas[i].pos_y] = '-';
     }
+}
+
+void print_game_over_screen(data_t *data)
+{
+    mvprintw(LINES / 2 - 3, COLS / 2 - my_strlen("GAME OVER !") / 2, "GAME OVER !");
+    mvprintw(LINES / 2 - 1, COLS / 2 - (my_strlen("SCORE : ") + my_number_len(data->snake.score)) / 2, "SCORE : %d", data->snake.score);
+    mvprintw(LINES / 2 + 1, COLS / 2 - (my_strlen("HIGH SCORE : ") + my_number_len(data->snake.score)) / 2, "HIGH SCORE : %d", data->snake.score);
+    mvprintw(LINES / 2 + 3, COLS / 2 - my_strlen("TO PLAY AGAIN USE SPACE KEY") / 2, "TO PLAY AGAIN USE SPACE KEY");
+
 }
 
 void print_small(void)
@@ -133,6 +170,9 @@ void actualize_move_key(data_t *data)
 {
     int key = getch();
 
+    if (key == 32){
+        reset_game(data);
+    }
     if (data->key != LEFT && data->key != RIGHT && key == KEY_LEFT){
         data->key = LEFT;
         data->snake.cas[data->snake.length - 1].direction = LEFT;
@@ -155,6 +195,7 @@ void reset_snake(data_t *data)
 {
     data->snake.life -= 1;
     data->snake.length = LENGHT_SNAKE;
+    data->key = RIGHT;
 
     for (int i = 0; i < MAX_LENGHT; i++){
         data->snake.cas[i].is_active = 0;
@@ -175,7 +216,7 @@ void reset_snake(data_t *data)
 
 void snake_move(data_t *data)
 {
-    if (TIMEOF(data->clock_move) > 100){
+    if (TIMEOF(data->clock_move) > 30){
         for (int i = 0; data->snake.cas[i].is_active != 0; i++){
             if (data->snake.cas[i].direction == RIGHT){
                 if (i == data->snake.length - 1){
@@ -224,7 +265,7 @@ void game_loop(data_t *data)
 {
     while (data->game_isActive){
         data->timer = time(NULL) - data->begin_time;
-        if (LINES < MAP_HEIGHT || COLS < MAP_WIDTH)
+        if ((LINES < MAP_HEIGHT || COLS < MAP_WIDTH) && data->snake.life > 0)
             print_small();
         else if (data->snake.life > 0) {
             clear();
@@ -236,7 +277,11 @@ void game_loop(data_t *data)
         }
         else {
             clear();
-            printw("GAME OVER !");
+            if (getch() == 32){
+                reset_game(data);
+                continue;
+            }
+            print_game_over_screen(data);
             refresh();
         }
         usleep(80000);
